@@ -5,6 +5,7 @@
 # install.packages("lme4")
 # install.packages(c("lme4", "readxl", "openxlsx", "broom.mixed", "broom", "dplyr", "car", "lmerTest"))
 # install.packages("performance")
+
 library(readxl)       # 讀取 Excel
 library(lme4)         # 建立混合模型
 library(openxlsx)     # 輸出 Excel（可寫多個工作表）
@@ -25,16 +26,27 @@ vif.mer <- function(mod) {
   return(v)
 }
 
+abort_with_message <- function(title = "Abort", detail = NULL) {
+  cat("\nAbort Execution:\n\t", detail)
+  flush.console()
+  stop(title)
+}
+
+# Step 1 Check
+# cat("\nStep 1, Start execution...\n")
+# abort_with_message("Pause Step 1")
+
 # 2. 讀入資料（請修改為你的實際資料路徑）
 
 home_data   <- read_excel("data/家養犬_填補後資料062301.xlsx")
 shelter_data<- read_excel("data/收容犬_填補後資料062501.xlsx")
 
 # 查看資料結構與行數
-str(home_data)
-str(shelter_data)
-nrow(home_data)
-nrow(shelter_data)
+# str(home_data)
+# str(shelter_data)
+# nrow(home_data)
+# nrow(shelter_data)
+#abort_with_message("Pause Step 2-1")
 
 # 查看哪些欄位找不到
 behavior_vars <- c("train_and_obey","aggresive","fear_and_anxiety","separate","exciment","attachment",
@@ -42,10 +54,11 @@ behavior_vars <- c("train_and_obey","aggresive","fear_and_anxiety","separate","e
                    "behavior84","behavior85","behavior86","behavior87","behavior88","behavior89",
                    "behavior90","behavior91","behavior92","behavior93","behavior94","behavior95",
                    "behavior96","behavior97","behavior98","behavior99","behavior100")
-setdiff(behavior_vars, colnames(home_data))
-setdiff(behavior_vars, colnames(shelter_data))
-#  character(0)
-#  character(0)
+# setdiff(behavior_vars, colnames(home_data))
+# setdiff(behavior_vars, colnames(shelter_data))
+# character(0)
+# character(0)
+# abort_with_message("Pause Step 2-2")
 
 # 3. 資料前處理
 home_data[home_data == "N"]    <- NA
@@ -55,30 +68,24 @@ summary(home_data)
 sum(is.na(home_data))
 summary(shelter_data)
 sum(is.na(shelter_data))
+# abort_with_message("Pause Step 3-1")
 
 # 因子/數值轉換範例 註 餵食次數主要為1、2我認為影響非線性，故用類別result <- analyze_behavior("train_and_obey")
 home_factor_vars <- c("home_alone_situation", "if_else_pet","people_group", "people_where", "people_sex", "dog_sex", "ligation", "species","feed_times","when_feed", "feed_what")
 home_numeric_vars<- c("how_long_feed", "walk_dog_per_week","people_age", "dog_weight", "dog_age")
 home_data[home_factor_vars]    <- lapply(home_data[home_factor_vars], as.factor)
 home_data[home_numeric_vars]   <- lapply(home_data[home_numeric_vars], as.numeric)
-str(home_data)
-summary(home_data)
+#str(home_data)
+#summary(home_data)
+#abort_with_message("Pause Step 3-2")
 
 shelter_factor_vars <- c("move_size","clean_frequent","people_where","people_group", "people_sex", "dog_sex", "ligation", "species","feed_times","when_feed", "feed_what")
 shelter_numeric_vars<-c("how_long_here","social_with_human","social_with_dog","how_many_roommate","people_age", "dog_weight", "dog_age")
 shelter_data[shelter_factor_vars] <- lapply(shelter_data[shelter_factor_vars], as.factor)
 shelter_data[shelter_numeric_vars] <- lapply(shelter_data[shelter_numeric_vars], as.numeric)
-str(shelter_data)
-summary(shelter_data)
-
-# 測試執行函式
-# analyze_behavior <- function(behavior) {
-# cat("測試函式成功：你要分析的行為是：", behavior, "\n")
-# }
-#
-# exists("analyze_behavior")
-#
-
+#str(shelter_data)
+#summary(shelter_data)
+#abort_with_message("Pause Step 3-3")
 
 # 4. 定義函式：對單一行為建立三套模型並回傳整理結果（含樣本數與隨機效應變異）
 analyze_behavior <- function(behavior) {
@@ -146,11 +153,9 @@ analyze_behavior <- function(behavior) {
     cat("  模型 3 (shelter_data): na.omit 後的樣本數 =", nrow(dat3), "\n")
     
     if (nrow(dat3) >= 10 && length(unique(dat3$people_where)) >= 2) {
-      cat("    Trace 01\n");
       fixed_effects_mod3_potential <- c("move_size","clean_frequent","people_group","people_sex", "dog_sex", "species", "feed_what","social_with_human","social_with_dog","how_many_roommate","people_age", "dog_weight")
   
         valid_fixed_effects_mod3 <- Filter(function(fe) {
-          cat("    Trace 02\n");          
         fe %in% colnames(dat3) &&
           ((is.numeric(dat3[[fe]]) && sd(dat3[[fe]]) > 1e-6) ||
              (is.factor(dat3[[fe]]) && length(levels(dat3[[fe]])) > 1))
@@ -158,8 +163,6 @@ analyze_behavior <- function(behavior) {
          
       
       if (length(valid_fixed_effects_mod3) > 0) {
-        cat("    Trace 03\n");  
-        
         mod3 <- tryCatch({
           formula_str_mod3 <- paste0(behavior, " ~ ", paste(valid_fixed_effects_mod3, collapse = " + "), " + (1|people_where)")
           lme4::lmer(as.formula(formula_str_mod3), data = dat3)
@@ -257,9 +260,13 @@ analyze_behavior <- function(behavior) {
     return(NULL)
   })
 }
+#no execution ...
+#abort_with_message("Pause Step 4")
 
 # 5. 定義行為變項名稱
 behavior_vars <- c("train_and_obey","aggresive","fear_and_anxiety","separate","exciment","attachment","run","activity","behavior79","behavior80","behavior81","behavior82","behavior83","behavior84","behavior85","behavior86","behavior87","behavior88","behavior89","behavior90","behavior91","behavior92","behavior93","behavior94","behavior95","behavior96","behavior97","behavior98","behavior99","behavior100")
+#no execution ...
+#abort_with_message("Pause Step 4")
 
 # 6. 批次寫入 Excel
 wb <- createWorkbook()
@@ -274,7 +281,7 @@ for (b in behavior_vars) {
   }
 }
 # 7. 儲存檔案
-saveWorkbook(wb, file = "C:/Users/User/OneDrive/Desktop/作業資料(高中)/個研資料/0627_01_UsedN_with_VIF_integrated.xlsx", overwrite = TRUE)
+saveWorkbook(wb, file = "data/0627_01_UsedN_with_VIF_integrated.xlsx", overwrite = TRUE)
 cat("\n所有行為變項處理完成。請檢查 Excel 檔案和 R Console 輸出。\n")
 
 
