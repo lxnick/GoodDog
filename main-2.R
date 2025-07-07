@@ -98,14 +98,18 @@ analyze_behavior <- function(behavior) {
   
   mod2_success <- FALSE
   mod3_success <- FALSE
+#  abort_with_message("Pause Step 4-1")
   
   tryCatch({
     
     # 模型 2: 家養犬（lm）
     home_data[[behavior]] <- as.numeric(home_data[[behavior]])
+#    abort_with_message("Pause Step 4-2-1")
     home_model_vars <- c(behavior, "home_alone_situation", "if_else_pet","people_group", "people_where", "people_sex", "dog_sex", "species","feed_times","when_feed", "feed_what","how_long_feed", "walk_dog_per_week","people_age", "dog_weight", "dog_age")
     dat2 <- na.omit(home_data[, intersect(colnames(home_data), home_model_vars)])
     cat("  模型 2 (home_data): na.omit 後的樣本數 =", nrow(dat2), "\n")
+    
+#    abort_with_message("Pause Step 4-2-2")
     
     if (nrow(dat2) >= 10) {
       fixed_effects_mod2_potential <- c("home_alone_situation", "if_else_pet","people_group", "people_sex", "dog_sex", "species", "feed_what", "walk_dog_per_week","people_age", "dog_weight")
@@ -134,6 +138,7 @@ analyze_behavior <- function(behavior) {
             vf2_df <- tryCatch({
               vif_vals <- car::vif(mod2)
               data.frame(term = names(vif_vals), VIF = as.numeric(vif_vals), model = "home_data (lm)")
+              
             }, error = function(e) NULL)
           }
         }
@@ -184,19 +189,9 @@ analyze_behavior <- function(behavior) {
                      section = "Random Effects")
           }, error = function(e) NULL)
           
-          cat("    Trace 04\n");  
-          if (length(valid_fixed_effects_mod3) > 1) {
-#            vf3_df <- tryCatch({
-#              vif_vals <- performance::check_collinearity(mod3)
-#              vf <- as.data.frame(vif_vals)[, c("Parameter", "VIF")]
-#              colnames(vf) <- c("term", "VIF")
-#              vf$model <- "shelter_data (lmer)"
-#              vf
-#            }, error = function(e) {
-#              cat("    !!! 模型 3 VIF 失敗: ", e$message, "\n"); NULL
-#            })
+           if (length(valid_fixed_effects_mod3) > 1) {
+
             vf3_df <- tryCatch({
-              cat("    Trace 05\n");               
             vif_vals <- performance::check_collinearity(mod3)
             print(vif_vals)
             # 檢查欄位是否都存在
