@@ -137,10 +137,45 @@ analyze_behavior <- function(behavior) {
           if (length(valid_fixed_effects_mod2) > 1) {
             vf2_df <- tryCatch({
               vif_vals <- car::vif(mod2)
-              data.frame(term = names(vif_vals), VIF = as.numeric(vif_vals), model = "home_data (lm)")
+#              cat("==================rownames\n")              
+#              print(rownames(vif_vals))
+#              cat("==================names\n")       
+#              print(names(vif_vals)) 
+#              cat("-------------------------------end\n")                
+              if (is.matrix(vif_vals)) {
+                cat("✅ car::vif() 回傳的是 matrix，使用 rownames\n")
+                cat("行數：", nrow(vif_vals), "，欄數：", ncol(vif_vals), "\n")
+                cat("前幾個 rownames：", paste(head(rownames(vif_vals)), collapse = ", "), "\n")
+                
+                vf <- data.frame(
+                  Term = rownames(vif_vals),
+                  VIF = vif_vals[, 1],
+                  model = "home_data (lm)"
+                )
+              } else {
+                # 萬一是 named vector，就走這條
+                vf <- data.frame(
+                  Term = names(vif_vals),
+                  VIF = as.numeric(vif_vals),
+                  model = "home_data (lm)"
+                )
+              }    
+
+              vf
               
-            }, error = function(e) NULL)
+            }, error = function(e)  {
+              cat("    !!! 模型 2 VIF 失敗: ", e$message, "\n")
+              NULL
+            })
           }
+          ## ← 在這裡加上 debug 輸出
+          if (!is.null(vf2_df)) {
+            cat("✅ 模型 2 VIF 成功產生，共 ", nrow(vf2_df), " 筆\n")
+            print(vf2_df)
+          } else {
+#            cat("❌ 模型 2 VIF 是 NULL（無法寫入 Excel）\n")
+          }
+          
         }
       }
     } else {
@@ -276,7 +311,7 @@ for (b in behavior_vars) {
   }
 }
 # 7. 儲存檔案
-saveWorkbook(wb, file = "data/0627_01_UsedN_with_VIF_integrated.xlsx", overwrite = TRUE)
+saveWorkbook(wb, file = "data/0707_04_UsedN_with_VIF_integrated.xlsx", overwrite = TRUE)
 cat("\n所有行為變項處理完成。請檢查 Excel 檔案和 R Console 輸出。\n")
 
 
