@@ -8,6 +8,7 @@
 
 library(readxl)       # 讀取 Excel
 library(lme4)         # 建立混合模型
+library(lmerTest)
 library(openxlsx)     # 輸出 Excel（可寫多個工作表）
 library(broom.mixed)  # 整理 lmer 模型（tidy）
 library(broom)        # 整理 lm 模型（tidy）
@@ -205,8 +206,9 @@ analyze_behavior <- function(behavior) {
       if (length(valid_fixed_effects_mod3) > 0) {
         mod3 <- tryCatch({
           formula_str_mod3 <- paste0(behavior, " ~ ", paste(valid_fixed_effects_mod3, collapse = " + "), " + (1|people_where)")
-          lme4::lmer(as.formula(formula_str_mod3), data = dat3)
-        }, error = function(e) {
+#          lme4::lmer(as.formula(formula_str_mod3), data = dat3)
+          lmer(as.formula(formula_str_mod3), data = dat3)
+                  }, error = function(e) {
           cat("    !!! 模型 3 建立失敗: ", e$message, "\n"); NULL
         })
         
@@ -311,7 +313,7 @@ for (b in behavior_vars) {
   }
 }
 # 7. 儲存檔案
-saveWorkbook(wb, file = "data/0707_04_UsedN_with_VIF_integrated.xlsx", overwrite = TRUE)
+saveWorkbook(wb, file = "data/0712_01_UsedN_with_VIF_integrated.xlsx", overwrite = TRUE)
 cat("\n所有行為變項處理完成。請檢查 Excel 檔案和 R Console 輸出。\n")
 
 
